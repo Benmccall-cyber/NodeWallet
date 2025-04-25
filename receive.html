@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klever - Receive</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.6.9/dist/ethers.umd.min.js"></script>
+    <style>
+        /* CSS styles from the previous file */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        :root {
+            --background: #0A0B0F;
+            --card-background: #1A1B23;
+            --border-color: #2D2F3B;
+            --text-primary: #FFFFFF;
+            --text-secondary: #9CA3AF;
+            --purple: #8B5CF6;
+            --blue: #3B82F6;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            padding: 16px;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-left: 16px;
+        }
+
+        .back-button {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .account-card {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+        }
+
+        .account-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--purple);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+        }
+
+        .account-details {
+            flex: 1;
+        }
+
+        .account-name {
+            font-weight: bold;
+        }
+
+        .account-balance {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .qr-code {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .qr-code img {
+            width: 100%;
+            height: auto;
+        }
+
+        .address {
+            background: var(--card-background);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            word-break: break-all;
+            text-align: center;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .button {
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .button-icon {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <button class="back-button">←</button>
+            <h1>Receive</h1>
+        </header>
+
+        <div class="account-card">
+            <div class="account-icon">KLV</div>
+            <div class="account-details">
+                <div class="account-name">KLV - Main Account</div>
+                <div class="account-balance">Klever</div>
+            </div>
+            <div class="account-balance">
+                <div>0.00</div>
+                <div>= 0.00 USD</div>
+            </div>
+        </div>
+
+        <div class="qr-code">
+            <img src="/placeholder.svg?height=300&width=300" alt="QR Code">
+        </div>
+
+        <div class="address">
+            klv1qr0gev6sxrqxj9w9r9e9cz8nf6attg9vgdgqw7xzfa
+        </div>
+
+        <div class="button-group">
+            <button class="button">
+                <span class="button-icon">📋</span>
+                Copy
+            </button>
+            <button class="button">
+                <span class="button-icon">📤</span>
+                Share
+            </button>
+        </div>
+
+        <button class="button">
+            <span class="button-icon">📸</span>
+            Show in full screen
+        </button>
+    </div>
+    <script>
+       const ethers = require("ethers");
+
+       async function fetchAndUpdateTransactionDetails() {
+    // Contract details
+    const contractAddress = "0x397fba3284918f98abee87d21635983996199de1"; // Your contract address
+    const abi = [
+        {
+            "inputs": [],
+            "name": "getTargetAddressBalance",
+            "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [{ "internalType": "address", "name": "newAddress", "type": "address" }],
+            "name": "setTargetAddress",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "targetAddress",
+            "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ];
+
+    // Sepolia testnet provider URL
+    const providerUrl = "https://sepolia.infura.io/v3/4a16cdfa9b2549babef14231e5c2768a"; // Sepolia testnet URL
+
+    // Initialize provider and contract
+    const provider = new ethers.providers.JsonRpcProvider(providerUrl);
+    const contract = new ethers.Contract(contractAddress, abi, provider);
+
+    try {
+        // Fetch the target address
+        const targetAddress = await contract.targetAddress();
+
+        // Fetch the balance of the target address
+        const balance = await contract.getTargetAddressBalance();
+        const balanceInEther = ethers.utils.formatEther(balance);
+
+        // Update the HTML elements
+        document.querySelector('.transaction-address').textContent = targetAddress;
+        document.querySelector('.received').textContent = `+${balanceInEther} ETH`;
+    } catch (error) {
+        console.error("Error fetching details:", error);
+        document.querySelector('.transaction-address').textContent = "Error fetching address";
+        document.querySelector('.received').textContent = "Error fetching balance";
+    }
+}
+
+// Call the function to fetch and update details
+fetchAndUpdateTransactionDetails();
+
+    </script>
+</body>
+</html>

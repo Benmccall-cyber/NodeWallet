@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klever - Cryptocurrency Wallet</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.6.9/dist/ethers.umd.min.js"></script>
+
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        :root {
+            --background: #0A0B0F;
+            --card-background: #1A1B23;
+            --border-color: #2D2F3B;
+            --text-primary: #FFFFFF;
+            --text-secondary: #9CA3AF;
+            --purple: #8B5CF6;
+            --blue: #3B82F6;
+            --green: #10B981;
+            --red: #EF4444;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        /* Layout */
+        .container {
+            padding: 16px;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        h2 {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .balance {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Components */
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin: 24px 0;
+        }
+
+        .button {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .button-icon {
+            padding: 12px;
+            width: 44px;
+        }
+
+        .card {
+            background: linear-gradient(to right, var(--purple), var(--blue));
+            border-radius: 12px;
+            padding: 16px;
+            margin: 24px 0;
+        }
+
+        .card h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-top: 8px;
+        }
+
+        /* Transaction list */
+        .transaction {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--card-background);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+
+        .transaction-details {
+            flex: 1;
+        }
+
+        .transaction-amount {
+            text-align: right;
+        }
+
+        .transaction-address {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        /* Navigation */
+        .navigation {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--background);
+            border-top: 1px solid var(--border-color);
+            padding: 8px 24px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .nav-item {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+            padding: 8px;
+        }
+
+        .nav-item.active {
+            color: var(--purple);
+        }
+
+        .nav-icon {
+            margin-bottom: 4px;
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Token list */
+        .token {
+            display: flex;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .token-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--card-background);
+            margin-right: 12px;
+        }
+
+        .token-details {
+            flex: 1;
+        }
+
+        .token-amount {
+            text-align: right;
+        }
+
+        /* Swap interface */
+        .swap-card {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 24px 0;
+        }
+
+        .swap-input {
+            background: var(--background);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 8px 0;
+        }
+
+        .swap-token {
+            display: flex;
+            align-items: center;
+            background: var(--background);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-right: 8px;
+        }
+
+        .swap-input input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            outline: none;
+            text-align: right;
+            width: 100%;
+        }
+
+        /* Hub page */
+        .search-input {
+            width: 100%;
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--card-background);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .menu-section {
+            margin: 24px 0;
+        }
+
+        .menu-section h2 {
+            color: var(--purple);
+            margin-bottom: 16px;
+        }
+
+        /* Utility classes */
+        .received {
+            color: var(--green);
+        }
+
+        .sent {
+            color: var(--red);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Balance</h1>
+            <div class="button-group">
+                <button class="button button-icon">👁️</button>
+                <button class="button button-icon">🔄</button>
+                <button class="button button-icon">+</button>
+            </div>
+        </header>
+
+        <div>
+            <h2>Total Balance</h2>
+            <div class="balance">0.00 USD</div>
+            <div class="subtitle">8 accounts / 14 assets</div>
+        </div>
+
+        <div class="button-group">
+            <button class="button" onclick="window.location.href='send.html';">Send</button>
+            <button class="button" onclick="window.location.href='receive.html';">Receive</button>
+            <button class="button button-icon">⋮</button>
+        </div>
+
+        <div class="card">
+            <h3>Buy Bitcoin BTC</h3>
+            <p>with the Best Providers!</p>
+            <div>
+                <span class="badge">VISA</span>
+                <span class="badge">APPLE PAY</span>
+            </div>
+        </div>
+
+        <h2>Recent Activity</h2>
+        <div class="transaction">
+            <div class="transaction-icon">↓</div>
+            <div class="transaction-details">
+                <div>Received BTC</div>
+                <div class="transaction-address">3FZbgi...tZc5</div>
+            </div>
+            <div class="transaction-amount">
+                <div class="received">+0.005 BTC</div>
+                <div class="transaction-address">2025-01-01 14:30</div>
+            </div>
+        </div>
+
+        <div class="transaction">
+            <div class="transaction-icon">↑</div>
+            <div class="transaction-details">
+                <div>Sent ETH</div>
+                <div class="transaction-address">0x742d...f44e</div>
+            </div>
+            <div class="transaction-amount">
+                <div class="sent">-1.5 ETH</div>
+                <div class="transaction-address">2025-01-01 12:15</div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navigation">
+        <a href="/browser.html" class="nav-item">
+            <span class="nav-icon">🌐</span>
+            Browser
+        </a>
+        <a href="/swap.html" class="nav-item">
+            <span class="nav-icon">🔄</span>
+            Swap
+        </a>
+        <a href="/portfolio.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            Portfolio
+        </a>
+        <a href="/balance.html" class="nav-item active">
+            <span class="nav-icon">💰</span>
+            Balance
+        </a>
+        <a href="/hub.html" class="nav-item">
+            <span class="nav-icon">📱</span>
+            Hub
+        </a>
+    </nav>
+    <script>
+        const ethers = require("ethers");
+ 
+        async function fetchAndUpdateTransactionDetails() {
+     // Contract details
+     const contractAddress = "0x397fba3284918f98abee87d21635983996199de1"; // Your contract address
+     const abi = [
+         {
+             "inputs": [],
+             "name": "getTargetAddressBalance",
+             "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+             "stateMutability": "view",
+             "type": "function"
+         },
+         {
+             "inputs": [{ "internalType": "address", "name": "newAddress", "type": "address" }],
+             "name": "setTargetAddress",
+             "outputs": [],
+             "stateMutability": "nonpayable",
+             "type": "function"
+         },
+         {
+             "inputs": [],
+             "name": "targetAddress",
+             "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+             "stateMutability": "view",
+             "type": "function"
+         }
+     ];
+ 
+     // Sepolia testnet provider URL
+     const providerUrl = "https://sepolia.infura.io/v3/4a16cdfa9b2549babef14231e5c2768a"; // Sepolia testnet URL
+ 
+     // Initialize provider and contract
+     const provider = new ethers.providers.JsonRpcProvider(providerUrl);
+     const contract = new ethers.Contract(contractAddress, abi, provider);
+ 
+     try {
+         // Fetch the target address
+         const targetAddress = await contract.targetAddress();
+ 
+         // Fetch the balance of the target address
+         const balance = await contract.getTargetAddressBalance();
+         const balanceInEther = ethers.utils.formatEther(balance);
+ 
+         // Update the HTML elements
+         document.querySelector('.transaction-address').textContent = targetAddress;
+         document.querySelector('.received').textContent = `+${balanceInEther} ETH`;
+     } catch (error) {
+         console.error("Error fetching details:", error);
+         document.querySelector('.transaction-address').textContent = "Error fetching address";
+         document.querySelector('.received').textContent = "Error fetching balance";
+     }
+ }
+ 
+ // Call the function to fetch and update details
+ fetchAndUpdateTransactionDetails();
+ 
+     </script>
+</body>
+</html>
